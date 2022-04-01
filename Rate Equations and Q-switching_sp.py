@@ -9,14 +9,23 @@ c = const.c.value
 alpha = 10**(-15)
 S = alpha
 
-if (laser == 'Nd:YAG' and RE == 2):
+laser = 'Nd:YAG'
+#starname     = 'KWHya'
+
+re = 2
+#re = 4
+
+Qsw = False
+Qsw = True
+
+if (laser == 'Nd:YAG' and re == 2):
     #Active medium
     Ntot = 10**23         
     sigma = 2.8*10**(-23)
     A = 1/(230*10**(-6))
     
     #Resonator
-    R = 0.80
+    losses = 0.2
     L = 1 #Length
     tau = (2*L)/(c*(1-R))
     
@@ -28,11 +37,13 @@ if (laser == 'Nd:YAG' and RE == 2):
     #Solve_ivp solves the problem:
     y0 = [0, 1]
     
+    tf = 2*10**(-5)
+    
     #Colour parameters
     colour0 = 'pink'
     colour1 = 'limegreen'
 
-if (laser == 'Nd:YAG' and RE == 4):
+if (laser == 'Nd:YAG' and re == 4):
     global N1B, N2B, N3B
     
     #Properties
@@ -47,9 +58,9 @@ if (laser == 'Nd:YAG' and RE == 4):
     P = CWPUMP/hv808
     
     #Resonator
-    R = 0.80
+    losses = 0.2
     L = 1 #Length
-    taucav = (2*L)/(c*(1-R))
+    taucav = (2*L)/(c*(losses))
     
     #Initial population
     N1B = 1.39767*10**(14)
@@ -58,6 +69,8 @@ if (laser == 'Nd:YAG' and RE == 4):
     
     #Solve_ivp solves the problem
     y0 = [N1B, N2B, N3B, 0]
+    
+    tf = 4*10**(-5)
     
     #Time constants
     tau10 = 11*10**(-9)
@@ -71,13 +84,16 @@ if (laser == 'Nd:YAG' and RE == 4):
 
 
 def RE2(t, y):
-    global tau, Qsw
+    global losses_Q, tau, Qsw
     
     I = y[0]
     p = y[1]
     
     if t > 1e-5/2 and Qsw == True:
-        tau = (2*L)/(c*(1-0.95))
+        losses_Q = 0.9
+        tau = (2*L)/(c*(losses_Q))
+    if t > 1.5e-5/2 and Qsw == True:
+        tau = (2*L)/(c*(losses))
         Qsw = False
     
     dIdt = Wp*(Ntot-I) - sigma*c*p*I-A*I
@@ -99,17 +115,6 @@ def RE4(t, y):
     dI21dt = I21*sigma21*(N2-N1)*c/(n*Vm)-I21/taucav+S
     
     return dN1dt, dN2dt, dN3dt, dI21dt
-    
-laser = 'Nd:YAG'
-#starname     = 'KWHya'
-
-RE = RE2
-RE = RE4
-
-Qsw = False
-#Qsw = True
-    
-tf = 2*10**(-5)
 
 #Time settting output:
 time_step = 0.1
@@ -119,10 +124,15 @@ t = time_interval
 time_init = 0
 time_end = tf
 
+if (re == 2):
+    RE = RE2
+elif (re == 4):
+    RE = RE4
+
 mysol = solve_ivp(RE, (time_init, time_end), y0=y0, t_eval=time_interval)
  
 #Output is collected:
-if (RE == RE2):
+if (re == 2):
     fig = plt.figure()
     fig.subplots_adjust(top = 0.8)
 
@@ -136,7 +146,7 @@ if (RE == RE2):
     ax2.legend()
     plt.show()
 
-if (RE == RE4):
+if (re == 4):
     fig = plt.figure()
     fig.subplots_adjust(top = 0.8)
 
