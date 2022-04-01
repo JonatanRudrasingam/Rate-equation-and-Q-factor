@@ -4,19 +4,21 @@ from scipy.integrate import solve_ivp
 from astropy import constants as const
 
 #Ved Q-switching ændre man på sin losses efter et stykke tid
+#Should start after the first peak
 
 c = const.c.value
-alpha = 10**(-15)
-S = alpha
+S = 10**(-15)
+tconv = 10**6
+t_Q = 1e-6
 
 laser = 'Nd:YAG'
 #starname     = 'KWHya'
 
 re = 2
-#re = 4
+re = 4
 
 Qsw = False
-Qsw = True
+#Qsw = True
 
 if (laser == 'Nd:YAG' and re == 2):
     #Active medium
@@ -25,9 +27,9 @@ if (laser == 'Nd:YAG' and re == 2):
     A = 1/(230*10**(-6))
     
     #Resonator
-    losses = 0.2
+    losses = 0.9
     L = 1 #Length
-    tau = (2*L)/(c*(1-R))
+    tau = (2*L)/(c*(losses))
     
     #Laser parameters
     Ith = 1/(c*sigma*tau)
@@ -37,7 +39,7 @@ if (laser == 'Nd:YAG' and re == 2):
     #Solve_ivp solves the problem:
     y0 = [0, 1]
     
-    tf = 2*10**(-5)
+    tf = 6*10**(-6)
     
     #Colour parameters
     colour0 = 'pink'
@@ -58,7 +60,7 @@ if (laser == 'Nd:YAG' and re == 4):
     P = CWPUMP/hv808
     
     #Resonator
-    losses = 0.2
+    losses = 0.9
     L = 1 #Length
     taucav = (2*L)/(c*(losses))
     
@@ -81,33 +83,48 @@ if (laser == 'Nd:YAG' and re == 4):
     tau2 = (tau20**(-1)+tau21**(-1))**(-1)
     tau3 = (tau30**(-1)+tau32**(-1))**(-1)
     tauRT = (2*OPL)/c
+    
+    #Colour parameters
+    colour0 = 'black'
+    colour1 = 'gold'
+    colour2 = 'orange'
+    colour3 = 'limegreen'
 
 
 def RE2(t, y):
     global losses_Q, tau, Qsw
     
+    #N3 = N1 = 0
+    #N3 has an infiniteal small lifetime
+    
     I = y[0]
     p = y[1]
     
-    if t > 1e-5/2 and Qsw == True:
-        losses_Q = 0.9
+    if t > t_Q and Qsw == True:
+        losses_Q = 0.2
         tau = (2*L)/(c*(losses_Q))
-    if t > 1.5e-5/2 and Qsw == True:
-        tau = (2*L)/(c*(losses))
         Qsw = False
     
-    dIdt = Wp*(Ntot-I) - sigma*c*p*I-A*I
-    dpdt = p*(sigma*c*I-1/tau)+alpha*A*I
+    dIdt = Wp*(Ntot-I) - sigma*c*p*I-A*I #sigma*c*p*I (gain) [I] = m^-3
+    dpdt = p*(sigma*c*I-1/tau)+S*A*I #S*A*I (spon)
     
     return dIdt, dpdt
 
 
 def RE4(t, y):
+    global losses_Q, taucav, Qsw
+    
+    #dN0/dt = 0
     
     N1 = y[0]
     N2 = y[1]
     N3 = y[2]
     I21 = y[3]
+    
+    if t > 1.7e-5 and Qsw == True:
+        losses_Q = 0.02
+        taucav = (2*L)/(c*(losses_Q))
+        Qsw = False
     
     dN1dt = I21*sigma21*(N2-N1)+N2/tau21-(N1-N1B)/tau10
     dN2dt = -I21*sigma21*(N2-N1)-(N2-N2B)*(1/tau20+1/tau21)+N3/tau32
@@ -137,10 +154,14 @@ if (re == 2):
     fig.subplots_adjust(top = 0.8)
 
     ax1 = fig.add_axes([0.15,1,1,1])
-    line1 = ax1.plot(mysol.t,mysol.y[0],label='Inversion', color = colour0)
+    ax1.set_xlabel('Time $[\\mu s]$')
+    ax1.set_ylabel('I $[\\frac{1}{m^3}]$')
+    line1 = ax1.plot(mysol.t*tconv,mysol.y[0],label='Inversion', color = colour0)
 
     ax2 = fig.add_axes([0.15,-0.2,1,1])
-    line2 = ax2.plot(mysol.t,mysol.y[1],label='Photon density', color = colour1)
+    ax2.set_xlabel('Time $[\\mu s]$')
+    ax2.set_ylabel('$\\rho [\\frac{1}{m^3}]$')
+    line2 = ax2.plot(mysol.t*tconv,mysol.y[1],label='Photon density', color = colour1)
 
     ax1.legend()
     ax2.legend()
@@ -151,19 +172,28 @@ if (re == 4):
     fig.subplots_adjust(top = 0.8)
 
     ax1 = fig.add_axes([0.15,1,1,1])
-    line1 = ax1.plot(mysol.t,mysol.y[0],label='Population 1')
+    ax1.set_xlabel('Time $[\\mu s]$', fontsize = 10)
+    ax1.set_ylabel('N', fontsize = 10)
+    line1 = ax1.plot(mysol.t*tconv,mysol.y[0],label='Population 1', color = colour0)
 
     ax2 = fig.add_axes([0.15,-0.2,1,1])
-    line2 = ax2.plot(mysol.t,mysol.y[1],label='Population 2')
+    ax2.set_xlabel('Time $[\\mu s]$', fontsize = 10)
+    ax2.set_ylabel('N', fontsize = 10)
+    line2 = ax2.plot(mysol.t*tconv,mysol.y[1],label='Population 2', color = colour1)
     
     ax3 = fig.add_axes([0.15,-1.4,1,1])
-    line3 = ax3.plot(mysol.t,mysol.y[2],label='Population 3')
+    ax3.set_xlabel('Time $[\\mu s]$', fontsize = 10)
+    ax3.set_ylabel('N', fontsize = 10)
+    line3 = ax3.plot(mysol.t*tconv,mysol.y[2],label='Population 3', color = colour2)
 
     ax4 = fig.add_axes([0.15,-2.6,1,1])
-    line4 = ax4.plot(mysol.t,mysol.y[3],label='Inversion')
+    ax4.set_xlabel('Time $\\mu s$', fontsize = 10)
+    ax4.set_ylabel('$\\rho c [\\frac{1}{m^2s]}]$', fontsize = 10)
+    line4 = ax4.plot(mysol.t*tconv,mysol.y[3],label='Photon flux', color = colour3)
 
     ax1.legend()
     ax2.legend()
     ax3.legend()
     ax4.legend()
     plt.show()
+#Plot losses
