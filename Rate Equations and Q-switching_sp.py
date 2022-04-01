@@ -40,7 +40,7 @@ if (laser == 'Nd:YAG' and re == 2):
     y0 = [0, 1]
     
     tf = 6*10**(-6)
-    
+  
     #Colour parameters
     colour0 = 'pink'
     colour1 = 'limegreen'
@@ -172,23 +172,23 @@ if (re == 4):
     fig.subplots_adjust(top = 0.8)
 
     ax1 = fig.add_axes([0.15,1,1,1])
-    ax1.set_xlabel('Time $[\\mu s]$', fontsize = 10)
-    ax1.set_ylabel('N', fontsize = 10)
+    ax1.set_xlabel('Time $[\\mu s]$', fontsize = 15)
+    ax1.set_ylabel('N', fontsize = 15)
     line1 = ax1.plot(mysol.t*tconv,mysol.y[0],label='Population 1', color = colour0)
 
     ax2 = fig.add_axes([0.15,-0.2,1,1])
-    ax2.set_xlabel('Time $[\\mu s]$', fontsize = 10)
-    ax2.set_ylabel('N', fontsize = 10)
+    ax2.set_xlabel('Time $[\\mu s]$', fontsize = 15)
+    ax2.set_ylabel('N', fontsize = 15)
     line2 = ax2.plot(mysol.t*tconv,mysol.y[1],label='Population 2', color = colour1)
     
     ax3 = fig.add_axes([0.15,-1.4,1,1])
-    ax3.set_xlabel('Time $[\\mu s]$', fontsize = 10)
-    ax3.set_ylabel('N', fontsize = 10)
+    ax3.set_xlabel('Time $[\\mu s]$', fontsize = 15)
+    ax3.set_ylabel('N', fontsize = 15)
     line3 = ax3.plot(mysol.t*tconv,mysol.y[2],label='Population 3', color = colour2)
 
     ax4 = fig.add_axes([0.15,-2.6,1,1])
-    ax4.set_xlabel('Time $\\mu s$', fontsize = 10)
-    ax4.set_ylabel('$\\rho c [\\frac{1}{m^2s]}]$', fontsize = 10)
+    ax4.set_xlabel('Time $\\mu s$', fontsize = 15)
+    ax4.set_ylabel('$\\rho c ~ [\\frac{1}{m^2s}]$', fontsize = 15)
     line4 = ax4.plot(mysol.t*tconv,mysol.y[3],label='Photon flux', color = colour3)
 
     ax1.legend()
